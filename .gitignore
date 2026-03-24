@@ -1,5 +1,8 @@
 *.gbc
 *.state
+*.ram
+*.rtc
+
 save_states
 
 .venv
