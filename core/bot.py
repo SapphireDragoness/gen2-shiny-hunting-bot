@@ -2,7 +2,8 @@ from pyboy import PyBoy
 from pyboy.utils import WindowEvent
 from loguru import logger
 
-from utils.utils import read_stats, check_shiny, read_battle_info
+from utils.utils import read_stats, check_shiny, read_battle_info, advance
+from core.battle import run
 
 
 def bot():
@@ -11,10 +12,17 @@ def bot():
         "roms/crystal.gbc",
     )
 
-    while not emu.send_input(WindowEvent.QUIT):
+    while True:
         # run normally in overworld
+        # emu.tick()
+        emu.button("right")
         emu.tick()
-
+        emu.button("up")
+        emu.tick()
+        emu.button("left")
+        emu.tick()
+        emu.button("down")
+        emu.tick()
         # in a wild battle
         # TODO: works, but could be better
         if hex(emu.memory[0xD22D]) == "0x1":
@@ -33,8 +41,8 @@ def bot():
             logger.debug(f"Speed DV: {stats["speed"]}")
             logger.debug(f"Special DV: {stats["special"]}")
 
-            for _ in range(300):
-                emu.tick(1, True)
+            # advance 300 frames, wait for animation to end
+            advance(emu, 300)
 
             if check_shiny(stats):
                 # shiny found: log and save
@@ -45,23 +53,4 @@ def bot():
                     emu.save_state(f)
             else:
                 # run from battle
-                for _ in range(12):
-                    emu.tick(1, True)
-                emu.button("down")
-                emu.tick()
-                for _ in range(12):
-                    emu.tick(1, True)
-                emu.button("right")
-                emu.tick()
-                for _ in range(12):
-                    emu.tick(1, True)
-                emu.button("a")
-                emu.tick()
-                for _ in range(12):
-                    emu.tick(1, True)
-                emu.button("a")
-                emu.tick()
-                for _ in range(12):
-                    emu.tick(1, True)
-                emu.button("a")
-                emu.tick()
+                run(emu)

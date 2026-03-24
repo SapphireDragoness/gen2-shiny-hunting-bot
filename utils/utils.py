@@ -40,3 +40,8 @@ def read_battle_info(species: int, level: int, location: int) -> dict:
             location
         ),  # TODO: find out where the location is stored in RAM and map it in dicts.py
     }
+
+
+def advance(emulator: any, frames: int) -> None:
+    for _ in range(frames):
+        emulator.tick(1, True)
