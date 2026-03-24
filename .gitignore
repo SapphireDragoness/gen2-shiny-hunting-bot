@@ -1,0 +1,5 @@
+*.gbc
+*.state
+save_states
+
+.venv
