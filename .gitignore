@@ -3,3 +3,4 @@
 save_states
 
 .venv
+__pycache__

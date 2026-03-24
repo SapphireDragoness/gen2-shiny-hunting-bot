@@ -20,21 +20,21 @@ def int_to_zeroed_hex(value: int) -> str:
     if len(val) == 4:
         return val
     # 0xX -> 0x0X
-    return val[:2] + 0 + val[2:]
+    return val[:2] + "0" + val[2:]
 
 
 def read_stats(d20c: int, d20d: int) -> dict:
     return {
-        "attack": int_to_zeroed_hex(d20c)[2],
-        "defense": int_to_zeroed_hex(d20c)[3],
-        "speed": int_to_zeroed_hex(d20d)[2],
-        "special": int_to_zeroed_hex(d20d)[3],
+        "attack": str(int(int_to_zeroed_hex(d20c)[2], 16)),
+        "defense": str(int(int_to_zeroed_hex(d20c)[3], 16)),
+        "speed": str(int(int_to_zeroed_hex(d20d)[2], 16)),
+        "special": str(int(int_to_zeroed_hex(d20d)[3], 16)),
     }
 
 
 def read_battle_info(species: int, level: int, location: int) -> dict:
     return {
-        "species": POKES[str(species)],
+        "species": POKES[int_to_zeroed_hex(species)[2:].upper()],
         "level": str(level),
         "location": str(
             location
