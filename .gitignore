@@ -2,6 +2,7 @@
 *.state
 *.ram
 *.rtc
+.env
 
 save_states
 

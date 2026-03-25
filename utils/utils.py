@@ -1,3 +1,8 @@
+import os
+from dotenv import load_dotenv
+from loguru import logger
+import requests
+
 from utils.dicts import POKES
 
 
@@ -45,3 +50,14 @@ def read_battle_info(species: int, level: int, location: int) -> dict:
 def advance(emulator: any, frames: int) -> None:
     for _ in range(frames):
         emulator.tick(1, True)
+
+
+def send_message(species: str) -> None:
+    load_dotenv()
+
+    token = os.getenv("TELEGRAM_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    message = f"Shiny {species} found!"
+
+    url = f"https://api.telegram.org/bot{token}/sendMessage?chat_id={chat_id}&text={message}"
+    logger.info(requests.get(url).json())

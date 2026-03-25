@@ -3,7 +3,7 @@ import tkinter as tk
 from pyboy import PyBoy
 from loguru import logger
 
-from utils.utils import read_stats, check_shiny, read_battle_info, advance
+from utils.utils import read_stats, check_shiny, read_battle_info, advance, send_message
 from core.battle import run
 
 
@@ -81,6 +81,7 @@ class HuntingBotUI:
                 "wb",
             ) as f:
                 self.emu.save_state(f)
+                send_message(info["species"])
         else:
             # run from battle
             run(self.emu)
