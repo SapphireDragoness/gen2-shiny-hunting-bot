@@ -1,56 +1,86 @@
+import threading
+import tkinter as tk
 from pyboy import PyBoy
-from pyboy.utils import WindowEvent
 from loguru import logger
 
 from utils.utils import read_stats, check_shiny, read_battle_info, advance
 from core.battle import run
 
 
-def bot():
-    # TODO: accept all Gen 2 ROMs
-    emu = PyBoy(
-        "roms/crystal.gbc",
-    )
+class HuntingBotUI:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Gen 2 Shiny Hunting Bot")
+        self.root.geometry("200x150")
 
-    while True:
-        # run normally in overworld
-        # emu.tick()
-        emu.button("right")
-        emu.tick()
-        emu.button("up")
-        emu.tick()
-        emu.button("left")
-        emu.tick()
-        emu.button("down")
-        emu.tick()
-        # in a wild battle
-        # TODO: works, but could be better
-        if hex(emu.memory[0xD22D]) == "0x1":
-            info = read_battle_info(
-                species=emu.memory[0xD206],
-                level=emu.memory[0xD213],
-                location=emu.memory[0xDCB6],
-            )
+        self.is_hunting = False
+        self.start_btn = tk.Button(
+            self.root, text="Start", command=self.start_hunting, bg="green", fg="white"
+        )
+        self.start_btn.pack(pady=10, fill=tk.X)
 
-            stats = read_stats(emu.memory[0xD20C], emu.memory[0xD20D])
+        self.stop_btn = tk.Button(
+            self.root, text="Stop", command=self.stop_hunting, bg="red", fg="white"
+        )
+        self.stop_btn.pack(pady=10, fill=tk.X)
 
-            logger.debug(f"Species: {info["species"]}")
-            logger.debug(f"Level: {info["level"]}")
-            logger.debug(f"Attack DV: {stats["attack"]}")
-            logger.debug(f"Defense DV: {stats["defense"]}")
-            logger.debug(f"Speed DV: {stats["speed"]}")
-            logger.debug(f"Special DV: {stats["special"]}")
+        self.status_label = tk.Label(self.root, text="Idle...")
+        self.status_label.pack(pady=5)
 
-            # advance 300 frames, wait for animation to end
-            advance(emu, 300)
+        self.bot_thread = threading.Thread(target=self.emu_loop, daemon=True)
+        self.bot_thread.start()
 
-            if check_shiny(stats):
-                # shiny found: log and save
-                logger.success(f"Shiny {info["species"]} found!")
-                with open(
-                    f"save_states/{info["species"]}_{info["location"]}.state", "wb"
-                ) as f:
-                    emu.save_state(f)
-            else:
-                # run from battle
-                run(emu)
+        self.root.mainloop()
+
+    def start_hunting(self):
+        self.is_hunting = True
+        self.status_label.config(text="On it!")
+
+    def stop_hunting(self):
+        self.is_hunting = False
+        self.status_label.config(text="Idle...")
+
+    def emu_loop(self):
+        self.emu = PyBoy("roms/crystal.gbc", window="SDL2")
+        while self.emu.tick():
+            if self.is_hunting:
+                self.emu.button("right")
+                self.emu.tick()
+                self.emu.button("left")
+                self.emu.tick()
+                # in a wild battle
+                if hex(self.emu.memory[0xD22D]) == "0x1":
+                    self.battle_handler()
+
+        self.emu.stop()
+
+    def battle_handler(self):
+        info = read_battle_info(
+            species=self.emu.memory[0xD206],
+            level=self.emu.memory[0xD213],
+            location=self.emu.memory[0xDCB6],
+        )
+
+        stats = read_stats(self.emu.memory[0xD20C], self.emu.memory[0xD20D])
+
+        logger.debug(f"Species: {info["species"]}")
+        logger.debug(f"Level: {info["level"]}")
+        logger.debug(f"Attack DV: {stats["attack"]}")
+        logger.debug(f"Defense DV: {stats["defense"]}")
+        logger.debug(f"Speed DV: {stats["speed"]}")
+        logger.debug(f"Special DV: {stats["special"]}")
+
+        # advance 300 frames, wait for animation to end
+        advance(self.emu, 300)
+
+        if check_shiny(stats):
+            # shiny found: log and save
+            logger.success(f"Shiny {info["species"]} found!")
+            with open(
+                f"save_states/{info["species"]}_{info["location"]}.state",
+                "wb",
+            ) as f:
+                self.emu.save_state(f)
+        else:
+            # run from battle
+            run(self.emu)

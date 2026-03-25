@@ -1,4 +1,4 @@
-from core.bot import bot
+from core.bot import HuntingBotUI
 
 if __name__ == "__main__":
-    bot()
+    HuntingBotUI()
